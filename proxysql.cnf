@@ -1,0 +1,64 @@
+datadir="/var/lib/proxysql"
+
+admin_variables=
+{
+    admin_credentials="admin:admin"
+    mysql_ifaces="0.0.0.0:6032"
+}
+
+mysql_variables=
+{
+    threads=4
+    max_connections=2048
+    default_query_delay=0
+    default_query_timeout=36000000
+    have_compress=true
+    poll_timeout=2000
+    interfaces="0.0.0.0:6033"
+    default_schema="frappe_production"
+    stacksize=1048576
+    connect_timeout_server=10000
+    # Reuses the existing root account for health-check pings, so no
+    # extra Galera-side user needs to be created.
+    monitor_username="root"
+    monitor_password="Aa123123"
+    monitor_history=600000
+    monitor_connect_interval=60000
+    monitor_ping_interval=10000
+    ping_interval_server_msec=120000
+    ping_timeout_server=500
+    commands_stats=true
+    connect_retries_on_failure=10
+}
+
+# All 3 Galera nodes in the same hostgroup — Galera is multi-master, so any
+# node can safely take both reads and writes. Uses the bare aliases
+# (galera-node1/2/3) defined on the erpnext-network in Galeria-compose.yml.
+mysql_servers =
+(
+    { address="galera-node1" , port=3306 , hostgroup=1, max_connections=200 },
+    { address="galera-node2" , port=3306 , hostgroup=1, max_connections=200 },
+    { address="galera-node3" , port=3306 , hostgroup=1, max_connections=200 }
+)
+
+# Frontend users ProxySQL will accept connections as. Passwords here MUST
+# match MARIADB_PASSWORD / MARIADB_ROOT_PASSWORD in Galeria-compose.yml and
+# FRAPPE_DB_PASSWORD in .env — keep all three in sync if you ever rotate them.
+mysql_users:
+(
+    {
+        username = "frappe_user"
+        password = "Aa123123"
+        default_hostgroup = 1
+        default_schema = "frappe_production"
+        max_connections = 1000
+        active = 1
+    },
+    {
+        username = "root"
+        password = "Aa123123"
+        default_hostgroup = 1
+        max_connections = 1000
+        active = 1
+    }
+)
