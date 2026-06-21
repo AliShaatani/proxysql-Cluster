@@ -10,31 +10,16 @@ services:
       - --skip-innodb-read-only-compressed
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      # FIX: MARIADB_GALERA_CLUSTER_NODES is not a recognized Bitnami variable.
-      # The real variable is MARIADB_GALERA_CLUSTER_ADDRESS, format gcomm://host1,host2,host3.
-      # Uses the bare aliases defined below (not the Dokploy-prefixed service name),
-      # so this stays correct even if Dokploy regenerates its stack-name hash.
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
-      # FIX: exactly one node must bootstrap the first time the cluster starts.
-      # Bitnami's image clears this automatically on subsequent restarts
-      # (it detects the node already joined a cluster before), so it's safe
-      # to leave this set permanently on node1.
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
       - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
       - MARIADB_DATABASE=frappe_production
     volumes:
-      # FIX: node-unique path. The old value (/var/lib/mysql for every node)
-      # would collide and corrupt data if two replicas ever land on the same host.
       - galera-node1-data:/bitnami/mariadb
     networks:
-      erpnext-network:
-        # FIX: explicit alias so "galera-node1" resolves over Swarm DNS regardless
-        # of Dokploy's stack-name prefix. MARIADB_GALERA_CLUSTER_ADDRESS above
-        # depends on this resolving from the other two nodes.
-        aliases:
-          - galera-node1
+      - erpnext-network
     deploy:
       replicas: 1
       placement:
@@ -52,8 +37,7 @@ services:
       - --skip-innodb-read-only-compressed
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
-      # No bootstrap flag here — this node JOINS the cluster node1 starts.
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
@@ -61,16 +45,11 @@ services:
     volumes:
       - galera-node2-data:/bitnami/mariadb
     networks:
-      erpnext-network:
-        aliases:
-          - galera-node2
+      - erpnext-network
     deploy:
       replicas: 1
       placement:
         constraints:
-          # FIX: the old constraint (node.id == vm1_id_or_replace_with_ip_label)
-          # was unfilled Dokploy placeholder text — no node has that ID, so this
-          # service could never schedule and stayed at 0/1 forever.
           - node.role == manager
       restart_policy:
         condition: on-failure
@@ -84,7 +63,7 @@ services:
       - --skip-innodb-read-only-compressed
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
@@ -92,20 +71,15 @@ services:
     volumes:
       - galera-node3-data:/bitnami/mariadb
     networks:
-      erpnext-network:
-        aliases:
-          - galera-node3
+      - erpnext-network
     deploy:
       replicas: 1
       placement:
         constraints:
-          # FIX: same placeholder-ID bug as node2.
           - node.role == manager
       restart_policy:
         condition: on-failure
 
-
-# LINKING EXTERNALLY TO YOUR APPLICATION AT THE BOTTOM
 networks:
   erpnext-network:
     external: true
