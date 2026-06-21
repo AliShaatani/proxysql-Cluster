@@ -5,7 +5,8 @@ services:
     image: bitnamilegacy/mariadb-galera:10.11
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
+      # FIXED: Internal nodes handshake on their bare global Swarm aliases
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
       - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
@@ -13,57 +14,49 @@ services:
       - MARIADB_DATABASE=frappe_production
       - MARIADB_GALERA_MARIABACKUP_USER=mariabackup
       - MARIADB_GALERA_MARIABACKUP_PASSWORD=Aa123123
+    volumes:
+      - galera-node1-data:/bitnami/mariadb
     networks:
-      - dokploy-network
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+      dokploy-network:
+        # FIXED: Forces Swarm DNS to map "galera-node1" inside ProxySQL's network
+        aliases:
+          - galera-node1
 
   galera-node2:
     image: bitnamilegacy/mariadb-galera:10.11
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
       - MARIADB_DATABASE=frappe_production
       - MARIADB_GALERA_MARIABACKUP_USER=mariabackup
       - MARIADB_GALERA_MARIABACKUP_PASSWORD=Aa123123
+    volumes:
+      - galera-node2-data:/bitnami/mariadb
     networks:
-      - dokploy-network
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+      dokploy-network:
+        aliases:
+          - galera-node2
 
   galera-node3:
     image: bitnamilegacy/mariadb-galera:10.11
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera-node1,galera-node2,galera-node3
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
       - MARIADB_DATABASE=frappe_production
       - MARIADB_GALERA_MARIABACKUP_USER=mariabackup
       - MARIADB_GALERA_MARIABACKUP_PASSWORD=Aa123123
+    volumes:
+      - galera-node3-data:/bitnami/mariadb
     networks:
-      - dokploy-network
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+      dokploy-network:
+        aliases:
+          - galera-node3
 
 networks:
   dokploy-network:
