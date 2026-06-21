@@ -3,16 +3,19 @@ version: '3.8'
 services:
   galera-node1:
     image: bitnamilegacy/mariadb-galera:10.11
+    # EXPOSE PORT DIRECTLY TO THE SWARM IN INTERNAL MODE
+    ports:
+      - target: 3306
+        published: 3306
+        mode: ingress
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
-      # FIXED: Swarm global routing requires explicit service-name addressing instead of network-scoped stack aliases
       - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
       - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
       - MARIADB_ROOT_PASSWORD=Aa123123
       - MARIADB_USER=frappe_user
       - MARIADB_PASSWORD=Aa123123
       - MARIADB_DATABASE=frappe_production
-      # FIXED: Added required replication credentials to satisfy newer Bitnami entrypoint validation checks
       - MARIADB_GALERA_MARIABACKUP_USER=mariabackup
       - MARIADB_GALERA_MARIABACKUP_PASSWORD=Aa123123
     volumes:
@@ -29,6 +32,10 @@ services:
 
   galera-node2:
     image: bitnamilegacy/mariadb-galera:10.11
+    ports:
+      - target: 3306
+        published: 3306
+        mode: ingress
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
       - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
@@ -52,6 +59,10 @@ services:
 
   galera-node3:
     image: bitnamilegacy/mariadb-galera:10.11
+    ports:
+      - target: 3306
+        published: 3306
+        mode: ingress
     environment:
       - MARIADB_GALERA_CLUSTER_NAME=erp_db_cluster
       - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://erpdbcluster-cluster_galera-node1,erpdbcluster-cluster_galera-node2,erpdbcluster-cluster_galera-node3
@@ -75,3 +86,9 @@ services:
 
 networks:
   erpnext-network:
+    external: true
+
+volumes:
+  galera-node1-data:
+  galera-node2-data:
+  galera-node3-data:
