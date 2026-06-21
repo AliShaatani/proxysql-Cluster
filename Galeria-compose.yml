@@ -104,26 +104,6 @@ services:
       restart_policy:
         condition: on-failure
 
-  proxysql:
-    # FIX: switched from image: + a bind-mounted File Mount to build: + a
-    # custom Dockerfile that COPYs proxysql.cnf in at build time. Dokploy's
-    # File Mount feature was not reliably propagating content edits into
-    # the running container — confirmed by two consecutive tests where an
-    # edited proxysql.cnf (new hostnames, then a new admin credential) had
-    # zero effect after redeploy. This file must sit in the same directory
-    # as this compose file and as proxysql.cnf for the build context to work.
-    build:
-      context: .
-      dockerfile: Dockerfile.proxysql
-    ports:
-      - "6033:6033"
-    networks:
-      erpnext-network:
-        aliases:
-          - proxysql
-    deploy:
-      replicas: 3
-      mode: replicated
 
 # LINKING EXTERNALLY TO YOUR APPLICATION AT THE BOTTOM
 networks:
