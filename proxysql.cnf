@@ -2,7 +2,11 @@ datadir="/var/lib/proxysql"
 
 admin_variables=
 {
-    admin_credentials="admin:admin"
+    # ProxySQL hardcodes the literal username "admin" to localhost-only
+    # connections on the admin port, regardless of password. A second
+    # credential pair (any other username) is required for remote access
+    # to the admin interface, e.g. for diagnostics from another container.
+    admin_credentials="admin:admin;dokploy_admin:DokployAdminPw1"
     mysql_ifaces="0.0.0.0:6032"
 }
 
@@ -32,13 +36,24 @@ mysql_variables=
 }
 
 # All 3 Galera nodes in the same hostgroup — Galera is multi-master, so any
-# node can safely take both reads and writes. Uses the bare aliases
-# (galera-node1/2/3) defined on the erpnext-network in Galeria-compose.yml.
+# node can safely take both reads and writes.
+#
+# IMPORTANT: these use the actual Dokploy-generated Swarm service names
+# (stack-name prefix + service name), NOT the bare service name. Custom
+# network aliases were tried first but did not resolve (DNS error -2 /
+# EAI_NONAME) — most likely because the Galera services hadn't picked up
+# the alias config yet. These prefixed names are the ones already proven
+# to resolve correctly via `getent hosts` in earlier testing.
+#
+# If your Dokploy stack is ever deleted and recreated (not just redeployed),
+# the random suffix after "erpdbcluster-cluster-" may change. Check via
+# `docker service ls` on the host or Dokploy's Swarm tab if these stop
+# resolving again.
 mysql_servers =
 (
-    { address="galera-node1" , port=3306 , hostgroup=1, max_connections=200 },
-    { address="galera-node2" , port=3306 , hostgroup=1, max_connections=200 },
-    { address="galera-node3" , port=3306 , hostgroup=1, max_connections=200 }
+    { address="erpdbcluster-cluster-0bxgsy_galera-node1" , port=3306 , hostgroup=1, max_connections=200 },
+    { address="erpdbcluster-cluster-0bxgsy_galera-node2" , port=3306 , hostgroup=1, max_connections=200 },
+    { address="erpdbcluster-cluster-0bxgsy_galera-node3" , port=3306 , hostgroup=1, max_connections=200 }
 )
 
 # Frontend users ProxySQL will accept connections as. Passwords here MUST
